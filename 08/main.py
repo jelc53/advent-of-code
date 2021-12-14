@@ -22,40 +22,78 @@ def decode_input_strings(data):
     cipher = dict()
     unsolved = list()
     sorted_data = sorted(data, key=len)
-    print(sorted_data)
     
     # a
     for i in sorted_data[1]:  # look at length 3
         if sorted_data[0].find(i) == -1:
-            cipher['a'] = i
+            cipher[i] = 'a'
         else:
             unsolved.append(i)
-    print(unsolved)
-    
+
     # c, e
     for i in sorted_data[9]:  # look at length 7
         if sorted_data[8].find(i) == -1 or sorted_data[7].find(i) == -1 or sorted_data[6].find(i) == -1:
             if i in unsolved:
-                cipher['c'] = i
+                cipher[i] = 'c'
                 unsolved.remove(i)
             else:
                 unsolved.append(i)
-    print(unsolved)
 
     # f
-    cipher['f'] = unsolved[0]
+    cipher[unsolved[0]] = 'f'
     unsolved.remove(unsolved[0])
-    print(unsolved)
 
-    # b
+    # b, d
     for i in sorted_data[2]:  # look at length 4
-        if i not in cipher.values():
-            cipher['b'] = i
-    
+        if i not in cipher.keys():
+            if sorted_data[3].find(i) != -1 and sorted_data[4].find(i) != -1 and sorted_data[5].find(i) != -1:
+                cipher[i] = 'd'
+            else:
+                cipher[i] = 'b'
+
+        if i in unsolved:
+            unsolved.remove(i)
+
+    # e, g
+    cipher[unsolved[0]] = 'e'
+    for i in sorted_data[9]:
+        if i not in cipher.keys():
+            cipher[i] = 'g'
     print(cipher)
 
-
     return cipher
+
+def convert_output_to_value(cipher, output):
+    value_parts = list()
+    mapping = {
+        '0': 'abcefg',
+        '1': 'cf',
+        '2': 'acdeg',
+        '3': 'acdfg',
+        '4': 'bcdf',
+        '5': 'abdfg',
+        '6': 'abdefg',
+        '7': 'acf',
+        '8': 'abcdefg',
+        '9': 'abcdfg',
+    }
+    for out_str in output:
+ 
+        # decode
+        out_str_decode = str()
+        for letter in out_str:
+            out_str_decode += cipher[letter]
+
+        # convert to value
+        for k, v in mapping.items():
+            if sorted(out_str_decode) == sorted(v):
+                value_parts.append(k)
+
+    value = str()
+    for val in value_parts:
+        value += val
+
+    return int(value)
 
 def main():
     input_filename = sys.argv[1]
@@ -81,7 +119,12 @@ def main():
         'eafb',
         'cagedb',
         'ab']
-    cipher = decode_input_strings(dummy)
+    total_sum = 0
+    for idx, line in enumerate(input):
+        cipher = decode_input_strings(line)
+        output_value = convert_output_to_value(cipher, output[idx])
+        total_sum += output_value
+    print("Total sum of decoded outputs: {}".format(total_sum))
 
 
 if __name__ == '__main__':
