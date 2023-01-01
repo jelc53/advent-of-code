@@ -1,0 +1,3 @@
+$ g++ -stand=c++11 -Wall -Wconversion -Wextra -Wpedantic main.cpp funcs.cpp -o main
+$ ./main data.txt
+
