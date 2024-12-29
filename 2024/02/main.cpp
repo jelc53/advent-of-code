@@ -3,7 +3,6 @@
 #include <sstream>
 #include <vector>
 #include <string>
-#include <algorithm>
 #include <numeric>
 
 std::vector<std::vector<int>> readFile(const std::string& fileName) {
@@ -30,14 +29,6 @@ std::vector<std::vector<int>> readFile(const std::string& fileName) {
 
   file.close();
   return lines;
-}
-
-bool isMonotonicIncreasing(const std::vector<int>& vec) {
-    return std::adjacent_find(vec.begin(), vec.end(), std::greater<int>()) == vec.end();
-}
-
-bool isMonotonicDecreasing(const std::vector<int>& vec) {
-    return std::adjacent_find(vec.begin(), vec.end(), std::less<int>()) == vec.end();
 }
 
 bool isStrictlyMonotonic(const std::vector<int>& vec) {
@@ -67,18 +58,49 @@ bool levelsCheck(const std::vector<int>& vec) {
     return true;
 }
 
-int numSafeReports(const std::vector<std::vector<int>>& data) {
+bool isSafe(const std::vector<int>& report) {
+  return isStrictlyMonotonic(report) && levelsCheck(report);
+}
+
+bool isSafeWithDampener(const std::vector<int>& report) {
+  if (isSafe(report)) {
+    return true;  // already safe without removing level
+  } 
+
+  // check if removing level makes report safe
+  for (size_t i = 0; i < report.size(); ++i) {
+    std::vector<int> modifiedReport = report;
+    modifiedReport.erase(modifiedReport.begin() + i);
+
+    if (isSafe(modifiedReport)) {
+      return true;  // found a safe report
+    }
+  }
+
+  return false;  // not safe even with dampener
+}
+
+int numSafeReports(const std::vector<std::vector<int>>& data, const bool& dampenerFlag) {
   int numSafe = 0;
   
   for (const auto& report : data) {
-    
+
     // check montonicity and level constraints
-    if (isStrictlyMonotonic(report) && levelsCheck(report)) {
-      numSafe++;
+    if (dampenerFlag) {
+      if (isSafeWithDampener(report)) {
+        numSafe++;
+      } 
+      
+    } else {
+      if (isSafe(report)) {
+        numSafe++;
+      } 
     }
+    
   }
   return numSafe;
 }
+
 
 int main(int argc, char *argv[]) {
   if (argc <= 1) {
@@ -102,8 +124,12 @@ int main(int argc, char *argv[]) {
   }
 
   // q1: check report safety
-  int num_safe = numSafeReports(data);
-  std:: cout << "Num safe reports: " << num_safe << std::endl;
+  int num_safe = numSafeReports(data, false);
+  std::cout << "Num safe reports: " << num_safe << std::endl;
 
+  // q2: add problem dampener
+  int num_safe_damp = numSafeReports(data, true);
+  std::cout << "Num safe reports with dampener: " << num_safe_damp << std::endl;
+   
   return 0;
 }
