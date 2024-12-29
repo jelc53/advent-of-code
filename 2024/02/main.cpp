@@ -3,6 +3,8 @@
 #include <sstream>
 #include <vector>
 #include <string>
+#include <algorithm>
+#include <numeric>
 
 std::vector<std::vector<int>> readFile(const std::string& fileName) {
   std::ifstream file(fileName);  // open file
@@ -30,6 +32,29 @@ std::vector<std::vector<int>> readFile(const std::string& fileName) {
   return lines;
 }
 
+bool isMonotonicIncreasing(const std::vector<int>& vec) {
+    return std::adjacent_find(vec.begin(), vec.end(), std::greater<int>()) == vec.end();
+}
+
+bool isMonotonicDecreasing(const std::vector<int>& vec) {
+    return std::adjacent_find(vec.begin(), vec.end(), std::less<int>()) == vec.end();
+}
+
+int levelsCheck(const std::vector<int>& vec) {
+  std::vector<bool> checks;
+  for (size_t k = 0; k < vec.size() - 1; ++k) {
+    int delta = abs(vec[k] - vec[k+1]);
+    if (delta >= 1 && delta <= 3) {
+      checks.push_back(true);
+    }
+    else {
+      checks.push_back(false);
+    }
+  }
+  int sum = std::accumulate(std::begin(checks), std::end(checks), 0); 
+  return sum;
+}
+
 int numSafeReports(std::vector<std::vector<int>> data) {
   int numSafe = 0;
   for (size_t i = 0; i < data.size(); ++i) {
@@ -38,10 +63,11 @@ int numSafeReports(std::vector<std::vector<int>> data) {
       diffs.push_back(data[i][j] - data[i][j+1]);
     }
     // check montonicity
-    if (i == 1) {
-    for (size_t k = 0; diffs.size(); ++k) {
-        std::cout << diffs[k] << std::endl;     
-      }     
+    if (isMonotonicIncreasing(diffs)) {
+      numSafe += levelsCheck(diffs);
+    }
+    else if (isMonotonicDecreasing(diffs)) {
+      numSafe += levelsCheck(diffs);
     }
   }
   return numSafe;
@@ -59,13 +85,13 @@ int main(int argc, char *argv[]) {
   std::vector<std::vector<int>> data = readFile(fileName);
 
   // print first two rows (reports) of data
-  for (size_t i = 0; i < 2; ++i) {
-    std::cout << "Report " << i + 1 << ": ";
-    for (int num : data[i]) {
-      std::cout << num << " ";
-    }
-    std::cout << std::endl;
-  }
+  //for (size_t i = 0; i < 2; ++i) {
+  //  std::cout << "Report " << i + 1 << ": ";
+  //  for (int num : data[i]) {
+  //    std::cout << num << " ";
+  //  }
+  //  std::cout << std::endl;
+  //}
 
   // q1: check report safety
   int num_safe = numSafeReports(data);
