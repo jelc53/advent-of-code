@@ -11,51 +11,38 @@ if __name__ == '__main__':
     # read file    
     with open(infile, 'r') as f:
         for line in f.readlines():
-            data.append(line)
+            data.append(line.strip())
 
-    # match pattern
-    pattern = r"mul\((\d+),(\d+)\)(.*?)(?=mul\(|$)"
-    subpattern = r"(do\(\)|don't\(\))"
+    # flatten data
+    text_string = "".join(data)
 
-    # extract mult(#,#) integer pairs      
-    matches_list = list()
-    for text_string in data:
-        matches = re.finditer(pattern, text_string)
-        matches_list.append(matches)
+    # match patterns
+    mult_pattern = r"mul\((\d+),(\d+)\)"
+    command_pattern = r"(do\(\)|don't\(\))"
+    combined_pattern = fr"{mult_pattern}|{command_pattern}"
 
-    # combine with do() and don't() instructions
-    flattened_matches_list = list()
-    for match in list(chain.from_iterable(matches_list)):
-        first_mult = (int(match.group(1)), int(match.group(2)))
-        in_between = match.group(3)
-        found_patterns = re.findall(subpattern, in_between)
-        flattened_matches_list.append((first_mult, found_patterns))
-    #print(flattened_matches_list)
-   
     # q1: compute partial result
     result = 0
-    for match in flattened_matches_list:
-        mult = match[0]  # multiply statement
+    matches = re.finditer(mult_pattern, text_string)
+    operations = [(int(match.group(1)), int(match.group(2))) for match in matches]
+    for mult in operations:
         result += mult[0] * mult[1]
-    
-    print(f"q1 result: {result}")
-
-    # q2: add switch commands
-    result = 0
-    switch = True
-    for match in flattened_matches_list:
-        mult, cmds = match
-        #print(switch, mult, cmds)
         
-        if switch:
-            result += mult[0] * mult[1]
-
-        for cmd in cmds:
-            if cmd == "do()":
-                switch = True
-            elif cmd == "don't()":
-                switch = False
-            else:
-                ValueError(f"Command {cmd} not recognized")
+    print(f"q1 result: {result}")
     
+    # q2: add switch commands
+    result, switch = 0, True
+    matches = re.finditer(combined_pattern, text_string)
+    for match in matches:
+        if match.group(1) and match.group(2):  # mul(x, y)
+            if switch:
+                x, y = int(match.group(1)), int(match.group(2))
+                result += x * y
+        elif match.group(3):  # do() or don't()
+            if match.group(3) == "do()":
+                switch = True
+            elif match.group(3) == "don't()":
+                switch = False
+     
     print(f"q2 result: {result}")
+
