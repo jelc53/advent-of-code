@@ -45,6 +45,7 @@ if __name__ == '__main__':
     switch = True
     for match in flattened_matches_list:
         mult, cmds = match
+        #print(switch, mult, cmds)
         
         if switch:
             result += mult[0] * mult[1]
