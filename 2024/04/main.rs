@@ -6,17 +6,26 @@ use std::io::{self, BufRead};
 fn read_char_matrix(file_path: &str) -> io::Result<Vec<Vec<char>>> {
     let mut array_2d = Vec::new();
 
-    // open the file
+    // Open the file
     let file = File::open(file_path)?;
     let reader = io::BufReader::new(file);
 
-    // read lines from file
+    // Read lines from the file
     for line_result in reader.lines() {
         let line = line_result?;
-        array_2d.push(line.chars().collect());
+        if !line.trim().is_empty() {
+            array_2d.push(line.chars().collect());
+        }
     }
 
-    Ok(array_2d)
+    if array_2d.is_empty() {
+        Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "The input file is empty or contains no valid data.",
+        ))
+    } else {
+        Ok(array_2d)
+    }
 }
 
 fn find_pattern_in_matrix(
@@ -24,44 +33,54 @@ fn find_pattern_in_matrix(
     target: &str,
 ) -> HashSet<((usize, usize), (isize, isize))> {
     let directions = [
-        (0, 1), // right
-        // (0, -1),  // left
-        (1, 0), // down
-        // (-1, 0),  // up
-        (1, 1), // down-right
-        // (-1, -1), // up-left
-        (-1, 1), // up-right
-                 // (1, -1),  // down-left
+        (0, 1),   // right
+        (0, -1),  // left
+        (1, 0),   // down
+        (-1, 0),  // up
+        (1, 1),   // diagonal down-right
+        (1, -1),  // diagonal down-left
+        (-1, 1),  // diagonal up-right
+        (-1, -1), // diagonal up-left
     ];
 
     let rows = data.len();
+    if rows == 0 {
+        return HashSet::new();
+    }
+
     let cols = data[0].len();
-    let target_len = target.len();
+    if cols == 0 {
+        return HashSet::new();
+    }
+
+    let target_chars: Vec<char> = target.chars().collect();
+    let target_len = target_chars.len();
     let mut unique_matches = HashSet::new();
 
     for i in 0..rows {
         for j in 0..cols {
-            for &(dx, dy) in directions.iter() {
-                let mut found_forward = true;
+            for &(dx, dy) in &directions {
+                let mut match_found = true;
 
                 for k in 0..target_len {
                     let x = i as isize + k as isize * dx;
                     let y = j as isize + k as isize * dy;
 
-                    // check bounds
+                    // Check bounds
                     if x < 0 || y < 0 || x >= rows as isize || y >= cols as isize {
-                        found_forward = false;
+                        match_found = false;
                         break;
                     }
 
-                    // check forward match
-                    if data[x as usize][y as usize] != target.chars().nth(k).unwrap() {
-                        found_forward = false;
+                    // Check if the character matches the target
+                    if data[x as usize][y as usize] != target_chars[k] {
+                        match_found = false;
                         break;
                     }
                 }
 
-                if found_forward {
+                // Add the match if all characters matched
+                if match_found {
                     unique_matches.insert(((i, j), (dx, dy)));
                 }
             }
@@ -72,7 +91,7 @@ fn find_pattern_in_matrix(
 }
 
 fn main() {
-    // get path from args
+    // Get path from args
     let args: Vec<String> = env::args().collect();
 
     if args.len() != 3 {
@@ -83,9 +102,8 @@ fn main() {
     let file_path = &args[1];
     let target = &args[2];
 
-    // load data into 2d array
-    let result = read_char_matrix(file_path);
-    let data = match result {
+    // Load data into 2D array
+    let data = match read_char_matrix(file_path) {
         Ok(array_2d) => array_2d,
         Err(e) => {
             eprintln!("Error reading file: {}", e);
@@ -93,11 +111,12 @@ fn main() {
         }
     };
 
+    // Debug first line (optional)
     if let Some(first_line) = data.first() {
-        println!("{:?}", first_line);
+        println!("First line of data: {:?}", first_line);
     }
 
-    // search and count logic
+    // Search and count logic
     let matches = find_pattern_in_matrix(&data, target);
     println!("Found {} matches", matches.len());
 }
