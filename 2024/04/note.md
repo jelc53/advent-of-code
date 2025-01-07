@@ -1,0 +1,3 @@
+- read data into 2d array of chars
+- loop through each element and search in all directions
+- increment count is match, else move to next element
