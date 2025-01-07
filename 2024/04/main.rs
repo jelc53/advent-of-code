@@ -3,31 +3,30 @@ use std::env;
 use std::fs::File;
 use std::io::{self, BufRead};
 
+/// Reads the character matrix from the file and returns a 2D vector of characters.
 fn read_char_matrix(file_path: &str) -> io::Result<Vec<Vec<char>>> {
-    let mut array_2d = Vec::new();
-
-    // Open the file
     let file = File::open(file_path)?;
     let reader = io::BufReader::new(file);
+    let mut matrix = Vec::new();
 
-    // Read lines from the file
-    for line_result in reader.lines() {
-        let line = line_result?;
+    for line in reader.lines() {
+        let line = line?;
         if !line.trim().is_empty() {
-            array_2d.push(line.chars().collect());
+            matrix.push(line.chars().collect());
         }
     }
 
-    if array_2d.is_empty() {
+    if matrix.is_empty() {
         Err(io::Error::new(
             io::ErrorKind::InvalidData,
-            "The input file is empty or contains no valid data.",
+            "The input file is empty or invalid.",
         ))
     } else {
-        Ok(array_2d)
+        Ok(matrix)
     }
 }
 
+/// Finds occurrences of a target pattern in the matrix in all 8 directions.
 fn find_pattern_in_matrix(
     data: &Vec<Vec<char>>,
     target: &str,
@@ -44,15 +43,7 @@ fn find_pattern_in_matrix(
     ];
 
     let rows = data.len();
-    if rows == 0 {
-        return HashSet::new();
-    }
-
     let cols = data[0].len();
-    if cols == 0 {
-        return HashSet::new();
-    }
-
     let target_chars: Vec<char> = target.chars().collect();
     let target_len = target_chars.len();
     let mut unique_matches = HashSet::new();
@@ -66,20 +57,17 @@ fn find_pattern_in_matrix(
                     let x = i as isize + k as isize * dx;
                     let y = j as isize + k as isize * dy;
 
-                    // Check bounds
-                    if x < 0 || y < 0 || x >= rows as isize || y >= cols as isize {
-                        match_found = false;
-                        break;
-                    }
-
-                    // Check if the character matches the target
-                    if data[x as usize][y as usize] != target_chars[k] {
+                    if x < 0
+                        || y < 0
+                        || x >= rows as isize
+                        || y >= cols as isize
+                        || data[x as usize][y as usize] != target_chars[k]
+                    {
                         match_found = false;
                         break;
                     }
                 }
 
-                // Add the match if all characters matched
                 if match_found {
                     unique_matches.insert(((i, j), (dx, dy)));
                 }
@@ -90,10 +78,35 @@ fn find_pattern_in_matrix(
     unique_matches
 }
 
-fn main() {
-    // Get path from args
-    let args: Vec<String> = env::args().collect();
+/// Finds X-MAS patterns (two MAS sequences forming an "X") in the matrix.
+fn find_xmas_in_matrix(data: &Vec<Vec<char>>) -> HashSet<(usize, usize)> {
+    let rows = data.len();
+    let cols = data[0].len();
+    let mut unique_matches = HashSet::new();
 
+    for i in 1..(rows - 1) {
+        for j in 1..(cols - 1) {
+            if data[i][j] == 'A' {
+                let d1 = data[i - 1][j - 1];
+                let d2 = data[i + 1][j + 1];
+                let o1 = data[i + 1][j - 1];
+                let o2 = data[i - 1][j + 1];
+
+                if ((d1 == 'M' && d2 == 'S') || (d1 == 'S' && d2 == 'M'))
+                    && ((o1 == 'M' && o2 == 'S') || (o1 == 'S' && o2 == 'M'))
+                {
+                    unique_matches.insert((i, j));
+                }
+            }
+        }
+    }
+
+    unique_matches
+}
+
+fn main() {
+    // Get command-line arguments
+    let args: Vec<String> = env::args().collect();
     if args.len() != 3 {
         eprintln!("Usage: {} <file_path> <target_pattern>", args[0]);
         std::process::exit(1);
@@ -102,21 +115,29 @@ fn main() {
     let file_path = &args[1];
     let target = &args[2];
 
-    // Load data into 2D array
+    // Load the matrix from the file
     let data = match read_char_matrix(file_path) {
-        Ok(array_2d) => array_2d,
+        Ok(matrix) => matrix,
         Err(e) => {
-            eprintln!("Error reading file: {}", e);
+            eprintln!("Error: {}", e);
             std::process::exit(1);
         }
     };
 
-    // Debug first line (optional)
+    // Print the first line of the matrix (optional debug step)
     if let Some(first_line) = data.first() {
         println!("First line of data: {:?}", first_line);
     }
 
-    // Search and count logic
+    // Find and count target pattern matches
     let matches = find_pattern_in_matrix(&data, target);
-    println!("Found {} matches", matches.len());
+    println!(
+        "Found {} matches for target pattern '{}'",
+        matches.len(),
+        target
+    );
+
+    // Find and count X-MAS patterns
+    let xmas_matches = find_xmas_in_matrix(&data);
+    println!("Found {} X-MAS matches", xmas_matches.len());
 }
