@@ -1,0 +1,6 @@
+- read ordering rules into vector of tuple pairs
+- after line break, read updates into "container of vectors"
+- define func to take vector and check if compliant with single rule
+- loop through each update, loop through each rule and check if complaint
+- if update is compliant, store middle value in output vector
+- sum output vector values to product result
