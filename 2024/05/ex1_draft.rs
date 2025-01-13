@@ -103,11 +103,11 @@ fn middle_element(vec: &Vec<i32>) -> Option<i32> {
     }
 }
 
-fn get_valid_update_values(rules: Vec<(i32, i32)>, updates: Vec<Vec<i32>>) -> Vec<i32> {
+fn get_valid_update_values(rules: Vec<(i32, i32)>, updates: Vec<Vec<i32>>) -> Vec<Option<i32>> {
     let mut out_vec = Vec::new();
     for update in updates {
-        if check_if_valid(rules, update) {
-            let value = middle_element(update);
+        if check_if_valid(rules.clone(), update.clone()) {
+            let value = middle_element(&update);
             out_vec.push(value);
         }
     }
@@ -141,5 +141,8 @@ fn main() {
 
     // check update validity
     let update_values = get_valid_update_values(rules, updates);
-    println!("Result q1: {:?}", update_values.iter().sum());
+    println!(
+        "Result q1: {}",
+        update_values.iter().map(|&x| x.unwrap_or(0)).sum::<i32>()
+    );
 }
